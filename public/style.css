@@ -1,0 +1,471 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #3498db;
+    --success-color: #27ae60;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --border-color: #bdc3c7;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: var(--dark-color);
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 40px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+main {
+    padding: 40px;
+}
+
+section {
+    margin-bottom: 40px;
+}
+
+h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+h3 {
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+/* Upload Section */
+.upload-area {
+    border: 3px dashed var(--border-color);
+    border-radius: 15px;
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: var(--light-color);
+}
+
+.upload-area:hover {
+    border-color: var(--accent-color);
+    background: white;
+}
+
+.upload-area.dragover {
+    border-color: var(--accent-color);
+    background: #e8f4f8;
+}
+
+.upload-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    color: var(--accent-color);
+}
+
+.upload-area h3 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.upload-area p {
+    color: var(--secondary-color);
+    margin-bottom: 20px;
+}
+
+/* Preview Section */
+.preview-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.preview-section img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    margin-bottom: 15px;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.btn-large {
+    padding: 18px 50px;
+    font-size: 1.2em;
+}
+
+.btn:disabled {
+    background: var(--border-color);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.button-group {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Metadata Form */
+.metadata-section {
+    background: var(--light-color);
+    padding: 25px;
+    border-radius: 12px;
+}
+
+.metadata-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+/* API Key Section */
+.api-key-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.api-key-section h3 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+.api-key-section h3 small {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.api-key-section label {
+    color: white;
+    font-weight: 600;
+}
+
+.api-key-section input[type="password"] {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    padding: 12px 15px;
+    font-size: 1em;
+    border-radius: 6px;
+}
+
+.api-key-section input[type="password"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+.api-key-section small {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.api-key-section small a {
+    color: white;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.api-key-section label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.api-key-section label[for] {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* Method Selection */
+.method-section {
+    background: var(--light-color);
+    padding: 25px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.method-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.method-option {
+    cursor: pointer;
+    position: relative;
+}
+
+.method-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.method-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    border: 3px solid var(--border-color);
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.method-card h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.method-card p {
+    color: var(--secondary-color);
+    font-size: 0.9em;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.method-option input[type="radio"]:checked + .method-card {
+    border-color: var(--accent-color);
+    background: #f0f8ff;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.method-option:hover .method-card {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* API Status */
+.api-status-section {
+    margin-top: 20px;
+}
+
+.api-status-success {
+    background: #d4edda;
+    color: #155724;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.api-status-warning {
+    background: #fff3cd;
+    color: #856404;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+    line-height: 1.6;
+}
+
+.api-status-warning a {
+    color: #0c5460;
+    text-decoration: underline;
+}
+
+.api-status-warning strong {
+    color: #856404;
+}
+
+/* Loading Section */
+.loading-section {
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 20px;
+    border: 5px solid var(--light-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-section p {
+    font-size: 1.2em;
+    color: var(--secondary-color);
+}
+
+/* Results Section */
+.result-block {
+    background: var(--light-color);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.result-block textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95em;
+    resize: vertical;
+}
+
+.result-block textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.moves-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.move-tag {
+    background: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#moveCount {
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* Footer */
+footer {
+    background: var(--light-color);
+    padding: 20px;
+    text-align: center;
+    color: var(--secondary-color);
+    font-size: 0.9em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        border-radius: 0;
+    }
+
+    header h1 {
+        font-size: 1.8em;
+    }
+
+    main {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .upload-area {
+        padding: 40px 20px;
+    }
+}

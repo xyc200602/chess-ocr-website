@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国际象棋手写记录识别系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♟️ 国际象棋手写记录识别系统</h1>
+            <p class="subtitle">上传手写棋谱图片，自动生成PGN格式</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <h3>拖放图片到这里</h3>
+                    <p>或者点击选择文件</p>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        选择图片
+                    </button>
+                </div>
+
+                <!-- Preview Section -->
+                <div id="previewSection" class="preview-section" style="display: none;">
+                    <h3>图片预览</h3>
+                    <img id="previewImage" src="" alt="Preview">
+                    <button class="btn btn-secondary" onclick="clearPreview()">清除</button>
+                </div>
+            </section>
+
+            <!-- API Key Configuration -->
+            <section class="metadata-section api-key-section">
+                <h3>🔑 API 密钥配置 <small style="font-size: 0.8em; color: #7f8c8d;">（使用GLM-4V时需要）</small></h3>
+                <div class="form-group">
+                    <label for="apiKey">智谱AI API密钥</label>
+                    <input type="password" id="apiKey" name="apiKey" placeholder="输入格式: id.secret">
+                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+                        <a href="https://open.bigmodel.cn/" target="_blank">点击此处</a> 获取API密钥 |
+                        <a href="#" onclick="clearApiKey(); return false;">清除已保存的密钥</a>
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="saveApiKey" checked>
+                        保存API密钥到浏览器（方便下次使用）
+                    </label>
+                </div>
+            </section>
+
+            <!-- Metadata Form -->
+            <section class="metadata-section">
+                <h3>比赛信息（可选）</h3>
+                <form id="metadataForm" class="metadata-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="white">白方</label>
+                            <input type="text" id="white" name="white" placeholder="White">
+                        </div>
+                        <div class="form-group">
+                            <label for="black">黑方</label>
+                            <input type="text" id="black" name="black" placeholder="Black">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="event">赛事</label>
+                            <input type="text" id="event" name="event" placeholder="?">
+                        </div>
+                        <div class="form-group">
+                            <label for="site">地点</label>
+                            <input type="text" id="site" name="site" placeholder="?">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">日期</label>
+                            <input type="date" id="date" name="date">
+                        </div>
+                        <div class="form-group">
+                            <label for="round">轮次</label>
+                            <input type="text" id="round" name="round" placeholder="?">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="result">结果</label>
+                        <select id="result" name="result">
+                            <option value="*">进行中</option>
+                            <option value="1-0">白胜</option>
+                            <option value="0-1">黑胜</option>
+                            <option value="1/2-1/2">和棋</option>
+                        </select>
+                    </div>
+                </form>
+            </section>
+
+            <!-- API Status -->
+            <section id="apiStatusSection" class="api-status-section" style="display: none;">
+                <div id="apiStatusContent"></div>
+            </section>
+
+            <!-- Recognition Method Selection -->
+            <section class="method-section">
+                <h3>识别方式</h3>
+                <div class="method-options">
+                    <label class="method-option">
+                        <input type="radio" name="method" value="glm" checked>
+                        <div class="method-card">
+                            <h4>🤖 GLM-4V 智能识别（推荐）</h4>
+                            <p>使用智谱AI视觉大模型，识别准确度高，支持手写和打印体</p>
+                        </div>
+                    </label>
+                    <label class="method-option">
+                        <input type="radio" name="method" value="ocr">
+                        <div class="method-card">
+                            <h4>🔍 Tesseract OCR 识别</h4>
+                            <p>传统OCR技术，无需API密钥，适合打印体棋谱</p>
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Process Button -->
+            <section class="action-section">
+                <button class="btn btn-large btn-primary" id="processBtn" onclick="processImage()" disabled>
+                    开始识别
+                </button>
+            </section>
+
+            <!-- Loading Section -->
+            <section id="loadingSection" class="loading-section" style="display: none;">
+                <div class="spinner"></div>
+                <p>正在识别中，请稍候...</p>
+            </section>
+
+            <!-- Results Section -->
+            <section id="resultsSection" class="results-section" style="display: none;">
+                <h2>识别结果</h2>
+
+                <!-- Raw Text -->
+                <div class="result-block">
+                    <h3>原始识别文本</h3>
+                    <textarea id="rawText" readonly></textarea>
+                </div>
+
+                <!-- Extracted Moves -->
+                <div class="result-block">
+                    <h3>识别出的着法 (<span id="moveCount">0</span> 步)</h3>
+                    <div id="movesList" class="moves-list"></div>
+                </div>
+
+                <!-- Manual Edit Section -->
+                <div class="result-block">
+                    <h3>手动编辑着法 <small style="color: #7f8c8d; font-size: 0.8em;">（可编辑修正）</small></h3>
+                    <textarea id="movesEdit" placeholder="手动输入或修改着法，用空格分隔，例如: e4 e5 Nf3 Nc6"></textarea>
+                    <button class="btn btn-primary" onclick="regeneratePGN()">重新生成 PGN</button>
+                </div>
+
+                <!-- PGN Output -->
+                <div class="result-block">
+                    <h3>PGN 格式输出</h3>
+                    <textarea id="pgnOutput"></textarea>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="copyPGN()">复制 PGN</button>
+                        <button class="btn btn-secondary" onclick="downloadPGN()">下载 PGN 文件</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>提示: 请确保手写记录清晰可见，使用标准国际象棋代数记谱法</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
