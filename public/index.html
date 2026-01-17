@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>国际象棋手写记录识别系统</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Chess libraries -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,7 +19,40 @@
             <p class="subtitle">上传手写棋谱图片，自动生成PGN格式</p>
         </header>
 
+        <!-- 使用说明 -->
         <main>
+            <section class="usage-guide-section">
+                <h2>📖 使用说明</h2>
+                <div class="guide-steps">
+                    <div class="guide-step">
+                        <h3>🔹 第一步：上传图片</h3>
+                        <p>点击"选择图片"或直接拖放图片到上传区域</p>
+                    </div>
+                    <div class="guide-step">
+                        <h3>🔹 第二步：开始识别</h3>
+                        <p>点击"开始识别"按钮，等待5-10秒</p>
+                    </div>
+                    <div class="guide-step">
+                        <h3>🔹 第三步：根据情况选择修正方式</h3>
+                        <div class="guide-options">
+                            <div class="guide-option">
+                                <h4>✅ 情况A：字体工整，小面积错误</h4>
+                                <p>直接在"手动编辑着法"区域修改错误的招法，然后点击"重新生成 PGN"</p>
+                            </div>
+                            <div class="guide-option">
+                                <h4>⚠️ 情况B：字体不工整，大面积错误</h4>
+                                <ol>
+                                    <li>点击"验证招法"按钮</li>
+                                    <li>使用导航器点击"上一步"回到最后一个正确的招法</li>
+                                    <li>点击"编辑棋盘"进入编辑模式</li>
+                                    <li>从当前局面开始手动走棋修正</li>
+                                    <li>完成后点击"从棋盘生成 PGN"</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <!-- Upload Section -->
             <section class="upload-section">
                 <div class="upload-area" id="uploadArea">
@@ -33,25 +72,6 @@
                     <h3>图片预览</h3>
                     <img id="previewImage" src="" alt="Preview">
                     <button class="btn btn-secondary" onclick="clearPreview()">清除</button>
-                </div>
-            </section>
-
-            <!-- API Key Configuration -->
-            <section class="metadata-section api-key-section">
-                <h3>🔑 API 密钥配置 <small style="font-size: 0.8em; color: #7f8c8d;">（使用GLM-4V时需要）</small></h3>
-                <div class="form-group">
-                    <label for="apiKey">智谱AI API密钥</label>
-                    <input type="password" id="apiKey" name="apiKey" placeholder="输入格式: id.secret">
-                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
-                        <a href="https://open.bigmodel.cn/" target="_blank">点击此处</a> 获取API密钥 |
-                        <a href="#" onclick="clearApiKey(); return false;">清除已保存的密钥</a>
-                    </small>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="saveApiKey" checked>
-                        保存API密钥到浏览器（方便下次使用）
-                    </label>
                 </div>
             </section>
 
@@ -101,11 +121,6 @@
                 </form>
             </section>
 
-            <!-- API Status -->
-            <section id="apiStatusSection" class="api-status-section" style="display: none;">
-                <div id="apiStatusContent"></div>
-            </section>
-
             <!-- Recognition Method Selection -->
             <section class="method-section">
                 <h3>识别方式</h3>
@@ -113,8 +128,8 @@
                     <label class="method-option">
                         <input type="radio" name="method" value="glm" checked>
                         <div class="method-card">
-                            <h4>🤖 GLM-4V 智能识别（推荐）</h4>
-                            <p>使用智谱AI视觉大模型，识别准确度高，支持手写和打印体</p>
+                            <h4>🤖 GLM-4.6V 智能识别（推荐）</h4>
+                            <p>使用智谱AI最新视觉大模型，识别准确度高，支持长棋谱（100+回合），支持手写和打印体</p>
                         </div>
                     </label>
                     <label class="method-option">
@@ -152,8 +167,28 @@
 
                 <!-- Extracted Moves -->
                 <div class="result-block">
-                    <h3>识别出的着法 (<span id="moveCount">0</span> 步)</h3>
+                    <h3>识别出的着法 (<span id="moveCount">0</span> 步) <button class="btn-small btn-secondary" onclick="validateMoves()">验证招法</button></h3>
                     <div id="movesList" class="moves-list"></div>
+                </div>
+
+                <!-- Move Validation Result -->
+                <div class="result-block" id="validationBlock" style="display: none;">
+                    <h3>招法验证结果</h3>
+                    <div id="validationSummary" class="validation-summary"></div>
+                    <div id="validatedMovesList" class="validated-moves-list"></div>
+                </div>
+
+                <!-- Chess Board -->
+                <div class="result-block" id="boardBlock" style="display: none;">
+                    <h3>棋盘局面 <small style="color: #7f8c8d; font-size: 0.8em;">（最后有效局面）</small></h3>
+                    <div class="board-container">
+                        <div id="chessboard" style="width: 400px; margin: 0 auto;"></div>
+                    </div>
+                    <div class="button-group" style="margin-top: 15px;">
+                        <button class="btn btn-secondary" onclick="startEditingBoard()">编辑棋盘</button>
+                        <button class="btn btn-secondary" onclick="flipBoard()">翻转棋盘</button>
+                        <button class="btn btn-primary" onclick="generatePGNFromBoard()" id="generateFromBoardBtn" style="display: none;">从棋盘生成 PGN</button>
+                    </div>
                 </div>
 
                 <!-- Manual Edit Section -->
@@ -173,13 +208,31 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Advertisement Section -->
+            <section class="ad-section">
+                <div class="ad-banner">
+                    <div class="ad-placeholder">
+                        <span class="ad-text">广告位招租</span>
+                        <span class="ad-size">728x90 或 响应式</span>
+                        <span class="ad-contact">商务合作请联系</span>
+                    </div>
+                </div>
+            </section>
         </main>
 
         <footer>
-            <p>提示: 请确保手写记录清晰可见，使用标准国际象棋代数记谱法</p>
+            <div class="footer-content">
+                <p class="footer-tip">提示: 请确保手写记录清晰可见，使用标准国际象棋代数记谱法</p>
+                <div class="footer-contact">
+                    <h4>联系我们</h4>
+                    <p>邮箱: <a href="mailto:dc42857@um.edu.mo">dc42857@um.edu.mo</a></p>
+                </div>
+            </div>
         </footer>
     </div>
 
+    <script src="api-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

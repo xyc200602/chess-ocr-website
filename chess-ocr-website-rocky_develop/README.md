@@ -38,47 +38,40 @@ A chess notation recognition system based on neural networks and OCR technology.
 - Responsive design, mobile-friendly
 
 ### Tech Stack
-- **Backend**: Node.js + Express
+- **Backend**: Python + Flask
 - **VLM**: Zhipu GLM-4.6V Vision Model (latest)
-- **OCR**: Tesseract.js (fallback)
-- **Image Processing**: Sharp
-- **Frontend**: HTML5 + CSS3 + JavaScript
-- **File Upload**: Multer
+- **OCR**: Tesseract (pytesseract, fallback)
+- **Image Processing**: Pillow (PIL)
+- **Frontend**: HTML5 + CSS3 + JavaScript (CDN libraries, no npm needed)
+- **Chess Engine**: python-chess
 
 ## Installation
 
-### 1. Install Dependencies
+### 1. Install Python Dependencies
+
+Ensure Python 3.7+ is installed, then:
 
 ```bash
 cd D:\chess-ocr-website
-npm install
+pip install -r requirements.txt
 ```
 
-### 2. Configure API Key (Two Methods)
+**Note**: You also need to install Tesseract OCR separately:
+- **Windows**: Download from [GitHub](https://github.com/UB-Mannheim/tesseract/wiki) and add to PATH
+- **macOS**: `brew install tesseract`
+- **Linux**: `sudo apt-get install tesseract-ocr`
 
-#### Method 1: Frontend Input (Recommended) ⭐
+### 2. Configure API Key
 
-**Advantages**: No file modification needed, convenient, stored in browser
-
-1. Start server:
-   ```bash
-   npm start
-   ```
-
-2. Open browser: [http://localhost:3000](http://localhost:3000)
-
-3. Enter your Zhipu AI API key in the input field
-
-4. Check "Save API key to browser" for next time
-
-#### Method 2: Backend Configuration (Traditional)
+**Note**: API key is required only if you want to use GLM-4.6V recognition. Tesseract OCR doesn't need an API key.
 
 1. Get API key from [Zhipu AI Platform](https://open.bigmodel.cn/)
 2. Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
-3. Edit `.env`:
+   (On Windows: `copy .env.example .env`)
+3. Edit `.env` and add your API key:
    ```env
    ZHIPU_API_KEY=your_actual_api_key_here
    ZHIPU_MODEL=glm-4.6v
@@ -87,7 +80,7 @@ npm install
 ### 3. Start Server
 
 ```bash
-npm start
+python app.py
 ```
 
 ### 4. Access Website
@@ -96,12 +89,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Usage
 
-1. **Configure API Key** (if using GLM-4.6V)
-   - Enter your Zhipu AI key in the input field
-   - Format: `id.secret`
-   - Check "Save to browser" for auto-fill next time
-
-2. **Select Recognition Method**
+1. **Select Recognition Method**
    - **GLM-4.6V AI** (Recommended): Best for handwritten notation, supports long games
    - **Tesseract OCR**: No API key needed, good for printed notation
 
@@ -172,14 +160,13 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ```
 chess-ocr-website/
-├── server.js              # Express server & OCR logic
-├── package.json           # Dependencies
-├── public/                # Frontend
+├── app.py                 # Flask server & OCR logic
+├── requirements.txt       # Python dependencies
+├── public/                # Frontend (CDN-based, no npm needed)
 │   ├── index.html         # Main page
 │   ├── style.css          # Styles
 │   └── script.js          # Frontend logic
 ├── uploads/               # Temporary uploads
-├── .env.example           # API key template
 └── README.md              # Documentation
 ```
 
@@ -196,13 +183,37 @@ Generated PGN files are compatible with:
 
 ### GLM-4.6V Issues
 
-**Error**: API key invalid
+**Error**: `ZHIPU_API_KEY not configured`
+- Solution: Make sure you've created `.env` file with correct API key
+- Get API key from: https://open.bigmodel.cn/
+
+**Error**: `GLM-4.6V API Error: Invalid API key` or `401 Authentication failed`
+- Solution: Check if API key is correct
+- Make sure the key is valid and has sufficient quota
+- System will automatically try two authentication formats:
+  - Standard format: `Bearer {api_key}`
+  - Fallback format: `Bearer ZHIPU-AI:{api_key}`
 - Check key format: `id.secret`
 - Verify key is active on Zhipu AI platform
 
-**Error**: Recognition failed
-- System auto-falls back to Tesseract OCR
+**Error**: `400 Image format/parsing error` or `image_url must be a valid URL`
+- Solution: System automatically handles image format
+- Images are automatically converted to RGB format
+- Images are automatically compressed (if over 20MB)
+- Images use correct data URL format: `data:image/jpeg;base64,xxxx`
+- If still fails, check if image file is corrupted
+
+**Error**: Recognition failed or timeout
+- System auto-falls back to Tesseract OCR (if enabled)
 - Check network connection
+- Timeout is set to 120 seconds
+- Check console logs for detailed errors
+
+**Error**: Empty response content
+- Check console logs for response details
+- Check if `finish_reason` is `length` (indicates max_tokens limit reached)
+- If truncated, consider increasing `max_tokens` or segment recognition
+- System displays detailed response structure for debugging
 
 ### OCR Issues
 
@@ -267,52 +278,38 @@ MIT License
 - 响应式设计，支持移动端
 
 ### 技术栈
-- **后端**: Node.js + Express
+- **后端**: Python + Flask
 - **VLM**: 智谱GLM-4.6V 视觉大模型（最新版）
-- **OCR**: Tesseract.js (备用方案)
-- **图像处理**: Sharp (预处理和优化)
-- **前端**: HTML5 + CSS3 + JavaScript (原生)
-- **文件处理**: Multer
+- **OCR**: Tesseract (pytesseract, 备用方案)
+- **图像处理**: Pillow (PIL)
+- **前端**: HTML5 + CSS3 + JavaScript (CDN库，无需npm)
+- **国际象棋引擎**: python-chess
 
 ## 安装步骤
 
 ### 1. 安装依赖
 
-确保已安装 Node.js (推荐 v16 或更高版本)
+确保已安装 Python 3.7 或更高版本
 
 ```bash
 cd D:\chess-ocr-website
-npm install
+pip install -r requirements.txt
 ```
 
-### 2. 配置智谱API密钥（两种方式任选其一）
+**注意**: 还需要单独安装 Tesseract OCR：
+- **Windows**: 从 [GitHub](https://github.com/UB-Mannheim/tesseract/wiki) 下载并添加到PATH
+- **macOS**: `brew install tesseract`
+- **Linux**: `sudo apt-get install tesseract-ocr`
 
-#### 方式一：前端输入（推荐）⭐
+### 2. 配置智谱API密钥
 
-**优点**：无需修改文件，方便快捷，密钥保存在浏览器本地
+**注意**: 只有在使用GLM-4.6V识别时才需要配置API密钥。使用Tesseract OCR无需API密钥。
 
-1. 启动服务器：
-   ```bash
-   npm start
-   ```
-
-2. 打开浏览器访问 [http://localhost:3000](http://localhost:3000)
-
-3. 在页面上的"API 密钥配置"输入框中粘贴你的智谱AI密钥
-
-4. 勾选"保存API密钥到浏览器"以便下次使用
-
-#### 方式二：后端配置（传统方式）
-
-1. 前往 [智谱AI开放平台](https://open.bigmodel.cn/) 注册账号
-2. 创建API密钥
-3. 复制 `.env.example` 文件为 `.env`:
-
-```bash
-cp .env.example .env
-```
-
-4. 编辑 `.env` 文件，填入你的API密钥：
+1. 前往 [智谱AI开放平台](https://open.bigmodel.cn/) 注册账号并创建API密钥
+2. 创建 `.env` 文件（参考 `.env.example`）：
+   - Windows: 创建新文件 `.env`
+   - Linux/macOS: `cp .env.example .env`
+3. 编辑 `.env` 文件，填入你的API密钥：
 
 ```env
 ZHIPU_API_KEY=your_actual_api_key_here
@@ -324,13 +321,7 @@ ZHIPU_MODEL=glm-4.6v
 ### 3. 启动服务器
 
 ```bash
-npm start
-```
-
-或使用开发模式（自动重启）：
-
-```bash
-npm run dev
+python app.py
 ```
 
 ### 4. 访问网站
@@ -339,12 +330,7 @@ npm run dev
 
 ## 使用说明
 
-1. **配置API密钥（如使用GLM-4.6V）**
-   - 在页面顶部的"API 密钥配置"输入框粘贴智谱AI密钥
-   - 格式为：`id.secret`（中间有个点）
-   - 勾选"保存API密钥到浏览器"可自动保存，下次无需重新输入
-
-2. **选择识别方式**
+1. **选择识别方式**
    - **GLM-4.6V 智能识别**（推荐）：适合手写和复杂棋谱，支持长棋谱，需要配置API密钥
    - **Tesseract OCR**：传统OCR方式，无需API密钥，适合标准打印体
 
@@ -418,14 +404,13 @@ npm run dev
 
 ```
 chess-ocr-website/
-├── server.js              # Express服务器和OCR处理逻辑
-├── package.json           # 项目依赖配置
-├── public/                # 前端静态文件
+├── app.py                 # Flask服务器和OCR处理逻辑
+├── requirements.txt       # Python依赖配置
+├── public/                # 前端静态文件（使用CDN，无需npm）
 │   ├── index.html         # 主页面
 │   ├── style.css          # 样式文件
 │   └── script.js          # 前端交互逻辑
 ├── uploads/               # 临时上传文件目录
-├── .env.example           # API密钥配置模板
 └── README.md              # 项目说明文档
 ```
 
@@ -447,14 +432,31 @@ chess-ocr-website/
   - 解决：确保已创建 `.env` 文件并填入正确的API密钥
   - API密钥获取地址：https://open.bigmodel.cn/
 
-- **错误**: `GLM-4.6V API Error: Invalid API key`
+- **错误**: `GLM-4.6V API Error: Invalid API key` 或 `401 身份验证失败`
   - 解决：检查API密钥是否正确
   - 确保密钥有效且有足够的额度
+  - 系统会自动尝试两种认证格式：
+    - 标准格式：`Bearer {api_key}`
+    - 备用格式：`Bearer ZHIPU-AI:{api_key}`
+  - 如果仍然失败，请检查API密钥格式（应该是 `id.secret` 格式）
+
+- **错误**: `400 图片输入格式/解析错误` 或 `image_url must be a valid URL`
+  - 解决：系统已自动处理图片格式
+  - 图片会自动转换为RGB格式
+  - 图片会自动压缩（如果超过20MB）
+  - 图片使用正确的data URL格式：`data:image/jpeg;base64,xxxx`
+  - 如果仍然失败，请检查图片文件是否损坏
 
 - **错误**: 识别超时或失败
-  - 系统会自动fallback到Tesseract OCR
   - 检查网络连接
   - 查看控制台日志了解详细错误
+  - 超时时间已设置为120秒，如果仍然超时，可能是网络问题或图片太大
+
+- **错误**: 响应内容为空
+  - 检查控制台日志中的响应详情
+  - 查看 `finish_reason` 是否为 `length`（表示达到max_tokens限制）
+  - 如果被截断，考虑增加 `max_tokens` 或分段识别
+  - 系统会显示详细的响应结构用于调试
 
 #### 问题：GLM-4.6V 识别效果不好
 - 确保图片清晰，光线充足
@@ -486,7 +488,8 @@ chess-ocr-website/
 
 #### 问题：无法启动服务器
 - 检查端口3000是否被占用
-- 确保所有依赖已正确安装：`npm install`
+- 确保所有依赖已正确安装：`pip install -r requirements.txt`
+- 确保已安装Tesseract OCR并添加到PATH
 - 查看控制台错误信息
 
 #### 问题：上传失败
@@ -495,6 +498,12 @@ chess-ocr-website/
 
 ## 最新改进
 
+- ✅ **GLM-4.6V API 调用优化**（修复认证和图片格式问题）
+  - 修复401身份验证失败：自动尝试标准格式和ZHIPU-AI前缀格式
+  - 修复400图片格式错误：正确使用data URL格式（`data:image/xxx;base64,xxxx`）
+  - 添加详细的请求和响应日志，便于调试
+  - 自动图片格式转换和压缩（超过20MB自动压缩）
+  - 增强错误处理和重试机制
 - ✅ **招法验证功能**（自动检测非法招法，显示最后有效局面）
 - ✅ **棋盘可视化**（使用 chessboard.js 显示棋盘局面）
 - ✅ **局面回退导航**（跳转到任意历史局面，支持逐步导航）
@@ -503,7 +512,7 @@ chess-ocr-website/
 - ✅ **支持长棋谱识别**（max_tokens 提升到 5000，支持超长对局）
 - ✅ **极致精简 Prompt**（token 消耗降低 95%，仅 30 tokens）
 - ✅ **添加截断检测**（自动警告输出是否被截断）
-- ✅ **前端API密钥输入**（无需修改配置文件，直接在网页输入）
+- ✅ **API密钥从.env文件读取**（更安全，无需在前端输入）
 - ✅ **集成智谱GLM-4.6V视觉大模型**（识别准确度大幅提升）
 - ✅ 双识别引擎设计（GLM-4.6V + Tesseract OCR）
 - ✅ 智能fallback机制（GLM-4.6V失败自动切换到OCR）

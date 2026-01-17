@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const sharp = require('sharp');
+const { Chess } = require('chess.js');
 
 const app = express();
 const PORT = 3000;
@@ -284,12 +285,12 @@ class ChessNotationParser {
   }
 }
 
-// GLM-4V Vision Service
+// GLM-4.6V Vision Service
 class GLMChessRecognizer {
   constructor(apiKey = null) {
-    // Use provided API key or fall back to environment variable
-    this.apiKey = apiKey || process.env.ZHIPU_API_KEY;
-    this.model = process.env.ZHIPU_MODEL || 'glm-4v';
+    // 使用预配置的API密钥（不从环境变量或前端获取）
+    this.apiKey = '8ac174f30d1a45e7b6537366d6e25a28.bTd4aAMXloIXmedQ';
+    this.model = 'glm-4.6v';  // Updated to glm-4.6v
     this.apiUrl = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
   }
 
@@ -338,20 +339,18 @@ class GLMChessRecognizer {
   }
 
   async recognizeChessNotation(imagePath, customApiKey = null) {
-    const keyToUse = customApiKey || this.apiKey;
-
-    if (!keyToUse) {
-      throw new Error('ZHIPU_API_KEY not configured. Please set it in .env file or provide via frontend.');
+    // 使用预配置的API密钥，忽略前端传来的customApiKey
+    if (!this.apiKey) {
+      throw new Error('ZHIPU_API_KEY not configured.');
     }
 
     try {
-      console.log('Calling GLM-4V API...');
+      console.log('Calling GLM-4.6V API...');
       console.log('Using model:', this.model);
 
-      // Try direct API key approach first (newer API style)
-      const authorization = `Bearer ${keyToUse}`;
-      console.log('Using direct API key as Bearer token');
-      console.log('Auth header (first 30 chars):', authorization.substring(0, 30) + '...');
+      // 使用预配置的API密钥
+      const authorization = `Bearer ${this.apiKey}`;
+      console.log('Using pre-configured API key');
 
       // Convert image to base64
       const imageBuffer = fs.readFileSync(imagePath);
@@ -359,51 +358,8 @@ class GLMChessRecognizer {
       console.log('Image converted to base64, size:', imageBuffer.length);
 
       // Prepare the prompt for chess notation recognition
-      const prompt = `请识别图片中的国际象棋棋谱记录。
-
-## 重要说明：
-这是国际象棋棋谱，不是编码、分类号或其他任何东西！
-
-## 格式说明：
-每一条记录的格式是：回合号. 白方着法 黑方着法
-
-例如：
-- "1. f4 d5" = 第1回合，白方走f4，黑方走d5
-- "2. Nf3 Nf6" = 第2回合，白方走Nf3，黑方走Nf6
-- "3. g3 g6" = 第3回合，白方走g3，黑方走g6
-
-## 棋子字母含义：
-- N = 马（Knight）
-- B = 象（Bishop）
-- R = 车（Rook）
-- Q = 后（Queen）
-- K = 王（King）
-- 没有字母 = 兵（Pawn）
-
-## 格子表示：
-- 字母 a-h = 列（从左到右）
-- 数字 1-8 = 行（从下到上）
-- 例如：e4, d5, f3, c6, g2, b7
-
-## 特殊符号：
-- x = 吃子（例如：exd5, Nxe5）
-- + = 将军
-- # = 将杀
-- O-O = 短易位
-- O-O-O = 长易位
-- =Q = 升变为后
-
-## 识别要求：
-1. 只识别棋谱着法，不要过度解读
-2. 严格按照图片中显示的内容识别
-3. 保持原格式：数字+点+白方着法+空格+黑方着法
-4. 用空格分隔每一回合
-5. 不要添加任何解释或说明文字
-
-## 标准输出示例：
-1. f4 d5 2. Nf3 Nf6 3. g3 g6 4. Bg2 Bg7 5. O-O O-O
-
-现在请直接输出棋谱，从"1."开始：`;
+      // Minimal prompt for maximum efficiency
+      const prompt = `识别国际象棋棋谱，直接输出招法。格式示例：1. e4 e5 2. Nf3 Nc6`;
 
       // Prepare API request
       const requestData = {
@@ -426,10 +382,13 @@ class GLMChessRecognizer {
           }
         ],
         temperature: 0.1,
-        max_tokens: 2000
+        max_tokens: 5000,  // Increased to handle very long games (100+ moves)
+        thinking: {
+          type: 'disabled'  // Disable thinking mode for faster response
+        }
       };
 
-      console.log('Sending request to GLM-4V API...');
+      console.log('Sending request to GLM-4.6V API...');
       console.log('Request data:', JSON.stringify(requestData, null, 2));
 
       // Make API request with direct API key
@@ -447,7 +406,17 @@ class GLMChessRecognizer {
       // Extract the response
       if (response.data && response.data.choices && response.data.choices.length > 0) {
         const content = response.data.choices[0].message.content;
-        console.log('GLM-4V Response:', content);
+        console.log('GLM-4.6V Response:', content);
+
+        // Check if output was truncated
+        if (response.data.usage) {
+          const { completion_tokens, total_tokens } = response.data.usage;
+          if (completion_tokens >= 4750) {  // 95% of max_tokens (5000)
+            console.warn(`⚠️ Warning: Output may be truncated (${completion_tokens} tokens used)`);
+            console.warn('   Consider using shorter game records or implementing multi-page recognition');
+          }
+          console.log(`Token usage: ${completion_tokens} completion + ${response.data.usage.prompt_tokens} prompt = ${total_tokens} total`);
+        }
 
         // Extract moves from the response
         const moves = this.extractMoves(content);
@@ -460,21 +429,21 @@ class GLMChessRecognizer {
           usage: response.data.usage
         };
       } else {
-        throw new Error('Invalid response from GLM-4V API');
+        throw new Error('Invalid response from GLM-4.6V API');
       }
 
     } catch (error) {
-      console.error('GLM-4V API Error Details:');
+      console.error('GLM-4.6V API Error Details:');
       console.error('Status:', error.response?.status);
       console.error('Status Text:', error.response?.statusText);
       console.error('Data:', error.response?.data);
       console.error('Message:', error.message);
 
       if (error.response?.data?.error) {
-        throw new Error(`GLM-4V API Error: ${error.response.data.error.message || JSON.stringify(error.response.data.error)}`);
+        throw new Error(`GLM-4.6V API Error: ${error.response.data.error.message || JSON.stringify(error.response.data.error)}`);
       }
 
-      throw new Error(`GLM-4V recognition failed: ${error.message}`);
+      throw new Error(`GLM-4.6V recognition failed: ${error.message}`);
     }
   }
 
@@ -623,14 +592,154 @@ app.get('/api/test-config', (req, res) => {
   }
 });
 
+// Validate chess moves using chess.js library
+app.post('/api/validate-moves', (req, res) => {
+  try {
+    const { moves } = req.body;
+
+    if (!moves || !Array.isArray(moves)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Moves array is required'
+      });
+    }
+
+    const chess = new Chess();
+    const validationResults = [];
+    const validPositions = []; // Store all valid positions
+    let lastValidFen = chess.fen(); // Store initial position
+    let foundInvalid = false; // Flag to track if we've hit an invalid move
+
+    // Save initial position
+    validPositions.push({
+      moveIndex: -1,
+      fen: chess.fen(),
+      move: '初始局面'
+    });
+
+    moves.forEach((move, index) => {
+      const result = {
+        move: move,
+        moveNumber: index + 1,
+        isValid: false,
+        error: null
+      };
+
+      // Only try to make the move if we haven't found an invalid move yet
+      if (!foundInvalid) {
+        try {
+          const moveResult = chess.move(move);
+
+          if (moveResult) {
+            result.isValid = true;
+            lastValidFen = chess.fen(); // Update last valid position
+            // Save this valid position
+            validPositions.push({
+              moveIndex: index,
+              fen: chess.fen(),
+              move: move
+            });
+          } else {
+            result.isValid = false;
+            result.error = 'Invalid move';
+            foundInvalid = true; // Stop processing after first invalid move
+          }
+        } catch (error) {
+          result.isValid = false;
+          result.error = error.message;
+          foundInvalid = true; // Stop processing after first error
+        }
+      } else {
+        // Mark all subsequent moves as invalid without trying to execute them
+        result.isValid = false;
+        result.error = 'Skipped (previous move was invalid)';
+      }
+
+      validationResults.push(result);
+    });
+
+    // Count valid and invalid moves
+    const validMoves = validationResults.filter(r => r.isValid);
+    const invalidMoves = validationResults.filter(r => !r.isValid);
+
+    return res.json({
+      success: true,
+      validation: validationResults,
+      validPositions: validPositions, // Send all valid positions to frontend
+      summary: {
+        total: moves.length,
+        valid: validMoves.length,
+        invalid: invalidMoves.length,
+        lastValidFen: lastValidFen,
+        isComplete: chess.isGameOver(),
+        result: chess.isCheckmate() ? (chess.turn() === 'w' ? '0-1' : '1-0') :
+                chess.isDraw() ? '1/2-1/2' : '*'
+      }
+    });
+  } catch (error) {
+    console.error('Validation error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Generate PGN from board position (FEN)
+app.post('/api/fen-to-pgn', (req, res) => {
+  try {
+    const { fen, moves } = req.body;
+
+    if (!fen) {
+      return res.status(400).json({
+        success: false,
+        error: 'FEN is required'
+      });
+    }
+
+    const chess = new Chess(fen);
+
+    // If moves provided, try to reconstruct the game
+    if (moves && Array.isArray(moves)) {
+      const tempChess = new Chess();
+      const reconstructedMoves = [];
+
+      for (const move of moves) {
+        const result = tempChess.move(move);
+        if (result) {
+          reconstructedMoves.push(move);
+        }
+      }
+
+      return res.json({
+        success: true,
+        pgn: tempChess.pgn(),
+        fen: tempChess.fen(),
+        moves: reconstructedMoves
+      });
+    }
+
+    // Just return current position PGN
+    return res.json({
+      success: true,
+      pgn: chess.pgn() || `* (FEN: ${fen})`,
+      fen: fen,
+      moves: chess.history()
+    });
+  } catch (error) {
+    console.error('FEN to PGN error:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 app.post('/upload', upload.single('image'), async (req, res) => {
   try {
     console.log('\n=== Upload Request ===');
     console.log('Body keys:', Object.keys(req.body));
     console.log('Method:', req.body.method);
-    console.log('API Key present:', !!req.body.apiKey);
-    console.log('API Key length:', req.body.apiKey ? req.body.apiKey.length : 0);
-    console.log('API Key format:', req.body.apiKey ? req.body.apiKey.substring(0, 10) + '...' : 'N/A');
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -638,7 +747,6 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
     const imagePath = req.file.path;
     const method = req.body.method || 'glm'; // 'ocr' or 'glm'
-    const apiKey = req.body.apiKey; // API key from frontend
     const parser = new ChessNotationParser();
 
     let moves = [];
@@ -646,30 +754,22 @@ app.post('/upload', upload.single('image'), async (req, res) => {
     let confidence = 0;
 
     if (method === 'glm') {
-      // Use GLM-4V for recognition
-      console.log('Using GLM-4V for chess notation recognition...');
+      // Use GLM-4.6V for recognition
+      console.log('Using GLM-4.6V for chess notation recognition...');
 
-      if (!apiKey && !process.env.ZHIPU_API_KEY) {
-        console.error('❌ No API key provided');
-        return res.status(400).json({
-          success: false,
-          error: 'API key is required for GLM-4V recognition. Please provide it in the frontend input or configure it in .env file.'
-        });
-      }
-
-      console.log('✅ API key provided, creating GLM recognizer...');
-      const glmRecognizer = new GLMChessRecognizer(apiKey);
+      console.log('✅ Using pre-configured API key, creating GLM recognizer...');
+      const glmRecognizer = new GLMChessRecognizer();
 
       try {
-        console.log('📡 Starting GLM-4V recognition...');
-        const result = await glmRecognizer.recognizeChessNotation(imagePath, apiKey);
+        console.log('📡 Starting GLM-4.6V recognition...');
+        const result = await glmRecognizer.recognizeChessNotation(imagePath);
         moves = result.moves;
         rawText = result.text;
-        console.log(`✅ GLM-4V extracted ${moves.length} moves`);
+        console.log(`✅ GLM-4.6V extracted ${moves.length} moves`);
       } catch (glmError) {
-        console.error('❌ GLM-4V failed, falling back to OCR:', glmError.message);
+        console.error('❌ GLM-4.6V failed, falling back to OCR:', glmError.message);
         console.error('Error stack:', glmError.stack);
-        // Fall back to OCR if GLM-4V fails
+        // Fall back to OCR if GLM-4.6V fails
         console.log('Falling back to Tesseract OCR...');
 
         const processedImagePath = await parser.preprocessImage(imagePath);
